@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Quizzes</title>
+    <style>
+        :root{
+            --bg:#0f172a;          /* ardoise très foncé */
+            --panel:#111827;       /* gris bleuté */
+            --muted:#9ca3af;
+            --text:#e5e7eb;
+            --primary:#6366f1;     /* indigo */
+            --primary-2:#818cf8;
+            --stroke:#1f2937;
+            --good:#22c55e;
+            --badge:#374151;
+            --badge-stroke:#4b5563;
+            --danger:#ef4444;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0; background:linear-gradient(180deg,#0b1024,#0f172a 30%,#0b1024);
+            color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+        }
+        .container{max-width:1100px;margin:40px auto;padding:20px}
+        .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;padding:20px}
+        header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        h1{font-size:28px;margin:0}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--stroke);background:#0b1222;color:var(--text);text-decoration:none}
+        .btn:hover{border-color:#2b3550}
+        .btn.primary{background:var(--primary);border-color:transparent}
+        .btn.primary:hover{background:var(--primary-2)}
+        .muted{color:var(--muted)}
+        .flash{margin-bottom:12px;padding:10px 12px;border:1px solid #1e293b;border-radius:10px;background:#0b1430}
+        table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px;border:1px solid var(--stroke)}
+        th,td{padding:14px}
+        th{background:#0e162b;color:#cbd5e1;text-align:left;font-weight:600;border-bottom:1px solid var(--stroke)}
+        tr+tr td{border-top:1px solid var(--stroke)}
+        tr:hover td{background:#0e1529}
+        a.rowlink{color:var(--text);text-decoration:none}
+        .count{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--badge-stroke);background:var(--badge);border-radius:999px;padding:2px 10px}
+        .table-wrap{overflow:auto}
+        .actions{display:flex;gap:8px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="top">
+        <h1>Quizzes</h1>
+        <div class="actions">
+            <a class="btn" th:href="@{/logout}">Logout</a>
+            <a class="btn primary"
+               th:href="@{/quizzes/new}"
+               sec:authorize="hasRole('TEACHER')">+ Nouveau quiz</a>
+        </div>
+    </header>
+
+    <div class="flash" th:if="${param.created}">
+        ✅ Quiz créé avec succès.
+    </div>
+
+    <div class="card" th:if="${#lists.isEmpty(quizzes)}">
+        <p class="muted">Aucun quiz pour le moment.</p>
+        <div style="margin-top:10px">
+            <a class="btn primary" th:href="@{/quizzes/new}">Créer mon premier quiz</a>
+        </div>
+    </div>
+
+    <div class="table-wrap" th:if="${!#lists.isEmpty(quizzes)}">
+        <table>
+            <thead>
+            <tr>
+                <th style="width:100px">ID</th>
+                <th>Titre</th>
+                <th style="width:220px">Auteur</th>
+                <th style="width:140px">Questions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="q : ${quizzes}">
+                <td>
+                    <a class="rowlink" th:href="@{/quizzes/{id}(id=${q.id})}" th:text="${q.id}">1</a>
+                </td>
+                <td>
+                    <a class="rowlink" th:href="@{/quizzes/{id}(id=${q.id})}" th:text="${q.title}">Demo Quiz</a>
+                </td>
+                <td th:text="${q.ownerUsername}">teacher</td>
+                <td>
+            <span class="count">
+              <span th:text="${q.questionCount}">0</span>
+              <span>items</span>
+            </span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

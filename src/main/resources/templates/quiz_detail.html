@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="'Quiz #' + ${quiz.id} + ' — ' + ${quiz.title}">Quiz</title>
+    <style>
+        :root{
+            --bg:#0f172a; --panel:#111827; --stroke:#1f2937; --text:#e5e7eb; --muted:#9ca3af;
+            --primary:#6366f1; --primary-2:#818cf8; --badge:#374151; --badge-stroke:#4b5563; --good:#22c55e;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0; background:linear-gradient(180deg,#0b1024,#0f172a 30%,#0b1024);
+            color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+        }
+        .container{max-width:1000px;margin:40px auto;padding:20px}
+        header.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+        h1{margin:0;font-size:28px}
+        .muted{color:var(--muted)}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--stroke);background:#0b1222;color:var(--text);text-decoration:none}
+        .btn:hover{border-color:#2b3550}
+        .btn.primary{background:var(--primary);border-color:transparent}
+        .btn.primary:hover{background:var(--primary-2)}
+        .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;padding:18px;margin:14px 0}
+        .meta{color:var(--muted)}
+        .q-card{background:#0f172a;border:1px solid var(--stroke);border-radius:12px;padding:14px;margin:12px 0}
+        .q-head{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+        .badge{font-size:12px;border:1px solid var(--badge-stroke);background:var(--badge);border-radius:999px;padding:2px 10px}
+        ul{margin:8px 0 0 20px}
+        li{padding:2px 0}
+        .correct{font-weight:700;color:var(--good)}
+        code{background:#0b1430;border:1px solid #1e293b;border-radius:8px;padding:2px 6px}
+        .grid{display:grid;grid-template-columns:1fr;gap:12px}
+        @media (min-width:900px){ .grid{grid-template-columns:1.2fr .8fr} }
+        .kv{display:flex;gap:6px;align-items:center}
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header class="top">
+        <div>
+            <h1 th:text="${quiz.title}">Titre</h1>
+            <div class="meta">
+                Créé par <strong th:text="${quiz.owner.username}">teacher</strong> ·
+                Temps / question : <span th:text="${quiz.timePerQuestionSec}">20</span>s
+            </div>
+        </div>
+        <div style="display:flex;gap:8px">
+            <a class="btn" th:href="@{/quizzes}">← Retour</a>
+            <!-- actions futures (éditer, publier, etc.) -->
+            <a class="btn primary" href="#" onclick="return false;">Publier (à venir)</a>
+        </div>
+    </header>
+
+    <div class="grid">
+        <section class="card">
+            <h3 style="margin-top:0">Description</h3>
+            <p class="muted" th:text="${#strings.defaultString(quiz.description,'(aucune description)')}">(aucune description)</p>
+        </section>
+
+        <aside class="card">
+            <h3 style="margin-top:0">Infos</h3>
+            <div class="kv"><span class="badge">ID</span> <span th:text="${quiz.id}">1</span></div>
+            <div class="kv"><span class="badge">Auteur</span> <span th:text="${quiz.owner.username}">teacher</span></div>
+            <div class="kv"><span class="badge">Questions</span> <span th:text="${#lists.size(quiz.questions)}">0</span></div>
+        </aside>
+    </div>
+
+    <section>
+        <h3 th:text="'Questions (' + ${#lists.size(quiz.questions)} + ')'">Questions</h3>
+
+        <div class="q-card" th:each="q : ${quiz.questions}">
+            <div class="q-head">
+                <span class="badge" th:text="'#' + ${q.orderIndex}">#1</span>
+                <strong th:text="${q.label}">Intitulé</strong>
+                <span class="badge" th:text="${q.points} + ' pts'">100 pts</span>
+                <span class="badge" th:text="${q.timeLimitSeconds} + ' s'">20 s</span>
+                <!-- Type de question (pas de réflexion/interdits Thymeleaf) -->
+                <span class="badge" th:if="${q instanceof T(com.istic.kahoot.domain.MCQQuestion)}">MCQ</span>
+                <span class="badge" th:if="${q instanceof T(com.istic.kahoot.domain.TrueFalseQuestion)}">True/False</span>
+                <span class="badge" th:if="${q instanceof T(com.istic.kahoot.domain.ShortTextQuestion)}">Short</span>
+            </div>
+
+            <!-- MCQ -->
+            <div th:if="${q instanceof T(com.istic.kahoot.domain.MCQQuestion)}">
+                <ul>
+                    <li th:each="c : ${q.choices}" th:classappend="${c.correctAnswer} ? 'correct'">
+                        <span th:text="${c.label}">Réponse</span>
+                        <span th:if="${c.correctAnswer}">✔</span>
+                    </li>
+                </ul>
+                <div class="meta" style="margin-top:6px">
+                    Multi-sélection :
+                    <strong th:text="${q.multiSelect}">false</strong>
+                </div>
+            </div>
+
+            <!-- True/False -->
+            <div th:if="${q instanceof T(com.istic.kahoot.domain.TrueFalseQuestion)}">
+                Réponse correcte :
+                <strong th:text="${q.correct}">true</strong>
+            </div>
+
+            <!-- Short text -->
+            <div th:if="${q instanceof T(com.istic.kahoot.domain.ShortTextQuestion)}">
+                Motif attendu :
+                <code th:text="${q.expectedRegex}">(?i)tokyo</code>
+            </div>
+        </div>
+    </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!-- src/main/resources/templates/quiz_new.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Nouveau Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+        :root{
+            --bg:#0e1525; --card:#141c2f; --muted:#9aa5b1; --text:#e6e8ee; --line:#25304a;
+            --accent:#6c7cff; --accent-2:#7b61ff; --ok:#2ecc71; --warn:#f39c12; --error:#ff5874;
+            --input:#0f1a2d; --input-border:#304065; --chip:#1b2742;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0; background:radial-gradient(1200px 600px at 20% -10%, #1b2440 0%, transparent 60%),
+        radial-gradient(1000px 500px at 120% 10%, #1c2343 0%, transparent 60%), var(--bg);
+            color:var(--text); font:15px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial;
+        }
+        .shell{max-width:760px;margin:40px auto;padding:0 16px}
+        .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px}
+        h1{margin:0 0 14px 0; font-size:28px}
+        h2{margin:22px 0 12px; font-size:18px}
+        .subtitle{color:var(--muted); margin-bottom:18px}
+        .grid{display:grid; gap:12px}
+        .row{display:grid; grid-template-columns:1fr 200px; gap:12px}
+        label{font-weight:600; font-size:13px; color:#cfd6e4}
+        input[type=text],input[type=number],textarea{
+            width:100%; padding:10px 12px; border-radius:10px; background:var(--input);
+            border:1px solid var(--input-border); color:var(--text); outline:none;
+        }
+        input[type=checkbox]{transform:translateY(1px)}
+        .inline{display:flex; gap:12px; align-items:center}
+        .right{justify-content:flex-end}
+        .btn{
+            appearance:none; border:1px solid var(--input-border); background:linear-gradient(180deg,var(--accent),var(--accent-2));
+            color:white; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+            box-shadow:0 6px 18px rgba(108,124,255,.25); transition:transform .04s ease;
+        }
+        .btn.secondary{
+            background:transparent; color:#d5dbff; border-color:#3a4e78;
+        }
+        .btn.ghost{background:transparent; color:var(--muted); border-color:var(--line)}
+        .btn:active{transform:translateY(1px)}
+        .fieldset{
+            border:1px dashed var(--line); border-radius:14px; padding:16px; margin:10px 0 16px 0;
+            background:rgba(255,255,255,.02)
+        }
+        .muted{color:var(--muted)}
+        .chips{display:flex; gap:8px; flex-wrap:wrap}
+        .chip{background:var(--chip); border:1px solid var(--line); color:#cfe1ff; padding:4px 8px; border-radius:999px; font-size:12px}
+        hr{border:none; border-top:1px solid var(--line); margin:18px 0}
+        .q-item{padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.02)}
+        .q-head{display:flex; gap:10px; align-items:center; margin-bottom:6px}
+        .badge{font-size:11px; padding:2px 8px; border-radius:999px; background:#223154; color:#b9c7ff; border:1px solid #32446e}
+        .correct{color:var(--ok); font-weight:700}
+        .danger{color:var(--error)}
+        .actions{display:flex; gap:10px; margin-top:14px}
+    </style>
+</head>
+<body>
+<div class="shell">
+    <div class="card">
+        <h1>Nouveau Quiz</h1>
+        <div class="subtitle">Crée le quiz (étape 1), puis ajoute tes questions (étape 2), et termine par “Créer le quiz en base”.</div>
+
+        <form id="quizForm" method="post" th:action="@{/quizzes/new}">
+            <input type="hidden" name="draftJson" id="draftJson"/>
+            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- Étape 1 -->
+            <h2>Étape 1 — Infos Quiz</h2>
+            <div class="grid">
+                <div>
+                    <label for="title">Titre</label>
+                    <input id="title" type="text" placeholder="Titre du quiz"/>
+                </div>
+                <div>
+                    <label for="description">Description</label>
+                    <input id="description" type="text" placeholder="Brève description (optionnel)"/>
+                </div>
+                <div class="row">
+                    <div>
+                        <label for="timePerQuestion">Temps/question (s)</label>
+                        <input id="timePerQuestion" type="number" min="5" max="300" value="20"/>
+                    </div>
+                    <div class="inline right" style="align-self:end">
+                        <button type="button" class="btn secondary" id="saveStep1">Enregistrer étape 1</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étape 2 -->
+            <h2>Étape 2 — Ajouter des questions</h2>
+
+            <!-- MCQ -->
+            <div class="fieldset">
+                <div class="chips"><span class="chip">MCQ</span><span class="muted">Choix multiples</span></div>
+                <div class="grid">
+                    <div>
+                        <label for="mcqLabel">Label</label>
+                        <input id="mcqLabel" type="text" placeholder="Intitulé de la question"/>
+                    </div>
+                    <div>
+                        <label for="mcqOrder">Ordre</label>
+                        <input id="mcqOrder" type="number" placeholder="auto si vide"/>
+                    </div>
+                    <div class="inline">
+                        <div style="flex:1">
+                            <label for="mcqC1">Choix 1</label>
+                            <input id="mcqC1" type="text" placeholder="ex: Réponse A"/>
+                        </div>
+                        <label class="inline" style="gap:6px"><span>Correct</span><input id="mcqC1ok" type="checkbox"/></label>
+                    </div>
+                    <div class="inline">
+                        <div style="flex:1">
+                            <label for="mcqC2">Choix 2</label>
+                            <input id="mcqC2" type="text" placeholder="ex: Réponse B"/>
+                        </div>
+                        <label class="inline" style="gap:6px"><span>Correct</span><input id="mcqC2ok" type="checkbox"/></label>
+                    </div>
+                    <div class="inline">
+                        <label class="inline" style="gap:6px"><span>Multi-select</span><input id="mcqMulti" type="checkbox"/></label>
+                    </div>
+                    <div class="inline right">
+                        <button type="button" class="btn" id="addMcq">Ajouter MCQ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- True/False -->
+            <div class="fieldset">
+                <div class="chips"><span class="chip">True/False</span></div>
+                <div class="grid">
+                    <div>
+                        <label for="tfLabel">Label</label>
+                        <input id="tfLabel" type="text" placeholder="Intitulé"/>
+                    </div>
+                    <div>
+                        <label for="tfOrder">Ordre</label>
+                        <input id="tfOrder" type="number" placeholder="auto si vide"/>
+                    </div>
+                    <div class="inline">
+                        <label class="inline" style="gap:6px"><span>Vrai ?</span><input id="tfCorrect" type="checkbox"/></label>
+                    </div>
+                    <div class="inline right">
+                        <button type="button" class="btn" id="addTf">Ajouter TF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Short text -->
+            <div class="fieldset">
+                <div class="chips"><span class="chip">Short text</span></div>
+                <div class="grid">
+                    <div>
+                        <label for="shortLabel">Label</label>
+                        <input id="shortLabel" type="text" placeholder="Intitulé"/>
+                    </div>
+                    <div>
+                        <label for="shortOrder">Ordre</label>
+                        <input id="shortOrder" type="number" placeholder="auto si vide"/>
+                    </div>
+                    <div>
+                        <label for="shortRegex">Regex attendue</label>
+                        <input id="shortRegex" type="text" placeholder="(?i)hibernate"/>
+                    </div>
+                    <div class="inline right">
+                        <button type="button" class="btn" id="addShort">Ajouter SHORT</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brouillon -->
+            <h2>Questions en brouillon</h2>
+            <p class="muted">1. Ajoute au moins une question pour créer le quiz.</p>
+            <div id="draftList" class="grid"></div>
+
+            <div class="actions">
+                <button type="button" class="btn" id="submitAll">Créer le quiz en base</button>
+                <button type="button" class="btn ghost" id="resetDraft">Réinitialiser le brouillon</button>
+                <a class="btn secondary" th:href="@{/quizzes}">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (() => {
+        // ---- modèle de brouillon (côté client)
+        const draft = {
+            title: '', description: '', timePerQuestionSec: 20,
+            questions: [] // items: {type:'MCQ'|'TF'|'SHORT', label, orderIndex?, extra...}
+        };
+
+        // ---- helpers
+        const byId = id => document.getElementById(id);
+        const toast = (msg) => { console.log(msg); }; // remplace par un vrai toast si tu veux
+
+        // ---- Etape 1
+        const fillStep1FromInputs = () => {
+            draft.title = byId('title').value.trim();
+            draft.description = byId('description').value.trim();
+            draft.timePerQuestionSec = Math.max(5, parseInt(byId('timePerQuestion').value || '20', 10));
+        };
+
+        byId('saveStep1').addEventListener('click', () => {
+            fillStep1FromInputs();
+            toast('Étape 1 enregistrée');
+        });
+
+        // ---- Ajouter MCQ
+        byId('addMcq').addEventListener('click', () => {
+            fillStep1FromInputs();
+            const label = byId('mcqLabel').value.trim();
+            if (!label) return alert('Le label MCQ est requis');
+
+            const c1 = byId('mcqC1').value.trim();
+            const c2 = byId('mcqC2').value.trim();
+            if (!c1 || !c2) return alert('Au moins deux choix sont requis');
+
+            const o = parseInt(byId('mcqOrder').value || '0', 10);
+            const orderIndex = Number.isFinite(o) && o > 0 ? o : undefined;
+
+            draft.questions.push({
+                type:'MCQ',
+                label, orderIndex,
+                multiSelect: byId('mcqMulti').checked,
+                choices:[
+                    {label:c1, correctAnswer: byId('mcqC1ok').checked},
+                    {label:c2, correctAnswer: byId('mcqC2ok').checked}
+                ]
+            });
+            renderDraft();
+            // reset champs MCQ
+            byId('mcqLabel').value='';
+            byId('mcqOrder').value='';
+            byId('mcqC1').value=''; byId('mcqC1ok').checked=false;
+            byId('mcqC2').value=''; byId('mcqC2ok').checked=false;
+            byId('mcqMulti').checked=false;
+        });
+
+        // ---- Ajouter TF
+        byId('addTf').addEventListener('click', () => {
+            fillStep1FromInputs();
+            const label = byId('tfLabel').value.trim();
+            if (!label) return alert('Le label True/False est requis');
+            const o = parseInt(byId('tfOrder').value || '0', 10);
+            const orderIndex = Number.isFinite(o) && o > 0 ? o : undefined;
+
+            draft.questions.push({
+                type:'TF',
+                label, orderIndex,
+                correct: byId('tfCorrect').checked
+            });
+            renderDraft();
+            byId('tfLabel').value=''; byId('tfOrder').value=''; byId('tfCorrect').checked=false;
+        });
+
+        // ---- Ajouter SHORT
+        byId('addShort').addEventListener('click', () => {
+            fillStep1FromInputs();
+            const label = byId('shortLabel').value.trim();
+            if (!label) return alert('Le label Short text est requis');
+            const regex = byId('shortRegex').value.trim();
+            const o = parseInt(byId('shortOrder').value || '0', 10);
+            const orderIndex = Number.isFinite(o) && o > 0 ? o : undefined;
+
+            draft.questions.push({
+                type:'SHORT',
+                label, orderIndex,
+                expectedRegex: regex || null
+            });
+            renderDraft();
+            byId('shortLabel').value=''; byId('shortOrder').value=''; byId('shortRegex').value='';
+        });
+
+        // ---- reset brouillon
+        byId('resetDraft').addEventListener('click', () => {
+            if (!confirm('Supprimer le brouillon ?')) return;
+            draft.questions = [];
+            renderDraft();
+        });
+
+        // ---- soumission
+        byId('submitAll').addEventListener('click', () => {
+            fillStep1FromInputs();
+            if (!draft.title) return alert('Le titre du quiz est requis');
+            if (draft.questions.length === 0) return alert('Ajoute au moins une question');
+
+            // auto-ordre si manquant (tri croissant, 1..n)
+            let idx=1;
+            draft.questions
+                .sort((a,b)=> (a.orderIndex||9999)-(b.orderIndex||9999))
+                .forEach(q => q.orderIndex = q.orderIndex || idx++);
+
+            byId('draftJson').value = JSON.stringify(draft);
+            byId('quizForm').submit();
+        });
+
+        // ---- rendu brouillon
+        function renderDraft(){
+            const box = byId('draftList');
+            box.innerHTML = '';
+            if (draft.questions.length === 0){
+                const p = document.createElement('p');
+                p.className='muted';
+                p.textContent = 'Aucune question pour le moment.';
+                box.appendChild(p);
+                return;
+            }
+            draft.questions
+                .slice()
+                .sort((a,b)=> (a.orderIndex||9999)-(b.orderIndex||9999))
+                .forEach((q,i)=>{
+                    const div = document.createElement('div');
+                    div.className='q-item';
+                    const typeBadge = `<span class="badge">${q.type}</span>`;
+                    const head = `
+          <div class="q-head">
+            ${typeBadge}
+            <span class="badge">#${q.orderIndex || '—'}</span>
+            <strong>${q.label}</strong>
+          </div>`;
+                    let body='';
+                    if(q.type==='MCQ'){
+                        const li = q.choices.map(c=>`<li>${c.label} ${c.correctAnswer?'<span class="correct">✔</span>':''}</li>`).join('');
+                        body = `<ul>${li}</ul><div class="muted">Multi-sélection : ${q.multiSelect? 'oui':'non'}</div>`;
+                    } else if(q.type==='TF'){
+                        body = `<div>Réponse correcte : <strong>${q.correct? 'Vrai':'Faux'}</strong></div>`;
+                    } else if(q.type==='SHORT'){
+                        body = `<div>Regex attendue : <code>${q.expectedRegex||'(aucune)'}</code></div>`;
+                    }
+                    const actions = `
+          <div class="actions">
+            <button type="button" class="btn ghost" data-action="up" data-index="${i}">↑</button>
+            <button type="button" class="btn ghost" data-action="down" data-index="${i}">↓</button>
+            <button type="button" class="btn secondary danger" data-action="del" data-index="${i}">Supprimer</button>
+          </div>`;
+                    div.innerHTML = head + body + actions;
+                    box.appendChild(div);
+                });
+
+            // actions item
+            box.querySelectorAll('button[data-action]').forEach(btn=>{
+                const i = parseInt(btn.dataset.index,10);
+                const act = btn.dataset.action;
+                btn.onclick = () => {
+                    if (act==='del'){
+                        draft.questions.splice(i,1);
+                    } else if (act==='up' && i>0){
+                        [draft.questions[i-1], draft.questions[i]] = [draft.questions[i], draft.questions[i-1]];
+                    } else if (act==='down' && i < draft.questions.length-1){
+                        [draft.questions[i+1], draft.questions[i]] = [draft.questions[i], draft.questions[i+1]];
+                    }
+                    // réattribuer orderIndex si nécessaire
+                    draft.questions.forEach((q,idx)=>{ if(!q.orderIndex) q.orderIndex = idx+1; });
+                    renderDraft();
+                };
+            });
+        }
+
+        renderDraft();
+    })();
+</script>
+</body>
+</html>
