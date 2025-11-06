@@ -60,6 +60,7 @@ Intégrer une authentification OAuth2/OpenID Connect via **Keycloak** dans l’a
 2. Il se connecte (PKCE) → retour à l’app avec un code.
 3. L’app échange le code contre un **ID Token/Access Token** → session établie → `/quizzes`.
 
+
 ---
 
 ## Aperçu de l’application
@@ -89,3 +90,12 @@ Intégrer une authentification OAuth2/OpenID Connect via **Keycloak** dans l’a
 - Le client `kahoot-web` est **public** → auth au token endpoint via PKCE (pas de client secret).
 - Les rôles utilisés pour `authorizeHttpRequests` proviennent du token OIDC (via `GrantedAuthorities`).
 
+## Environnement Keycloak (Docker)
+
+Nous avons lancé Keycloak en **mode dev** via l’image officielle et l’avons exposé sur **8081** (mappé vers 8080 du conteneur) :
+
+```bash
+docker run -p 8081:8080 \
+  -e KEYCLOAK_ADMIN=admin \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  quay.io/keycloak/keycloak:latest start-dev
